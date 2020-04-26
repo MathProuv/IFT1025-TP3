@@ -1,4 +1,3 @@
-import javafx.animation.Animation;
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -8,10 +7,13 @@ import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
 /**
@@ -19,63 +21,104 @@ import javafx.stage.Stage;
  */
 public class FishHunt extends Application {
     private final int width = 640, height = 480;
+	
+	private final Jeu jeu = new Jeu(width, height);
+	
+	private Stage primaryStage;
+    
     private final int tailleMoitieCible = 50/2;
     private final int tailleBalleTir = 50, vitesseTirCible = 300;
-    private Stage primaryStage;
-
-    private Controleur controleur = new Controleur(width, height);
-
-    public static void main(String[] args) {
-        launch(args);
-    }
-
+    
+    private boolean son = false, bruit = false;
+	
+	/**
+	 * Fonction main principale qui lance l'application
+	 * @param args
+	 */
+	public static void main(String[] args) { launch(args); }
+	
+	/**
+	 * lancement de l'application avec une scène de menu
+	 * @param primaryStage
+	 */
     @Override
     public void start(Stage primaryStage) {
     	
     	this.primaryStage = primaryStage;
-    	
-    	primaryStage.setScene(creerSceneMenu());
     	
         primaryStage.setTitle("Fish Hunt");
         primaryStage.setResizable(false);
 
         Image icone = new Image("/images/cible.png");
         primaryStage.getIcons().add(icone);
+	
+	    primaryStage.setScene(creerSceneMenu());
 
         primaryStage.show();
     }
 	
 	/**
-	 *
+	 * La scène du menu permet de choisir entre les différentes scènes
+	 * On a ajouté un bouton pour activer/désactiver le son et les bruitages (par défaut, ils sont éteints)
 	 * @return la scène du menu
 	 */
 	private Scene creerSceneMenu(){
+		//par défaut, les effets sonores sont désactivés
+		this.son = false;
+		this.bruit = false;
 	
 	    VBox rootMenu = new VBox();
-	    
+		Scene sceneMenu = new Scene(rootMenu, width, height);
+	 
+		//root
 	    BackgroundFill fillFondBleu = new BackgroundFill(Color.DARKBLUE, CornerRadii.EMPTY, Insets.EMPTY);
 	    Background fondBleu = new Background(fillFondBleu);
 	    rootMenu.setBackground(fondBleu);
-	    Scene sceneMenu = new Scene(rootMenu, width, height);
-	
 	    rootMenu.setAlignment(Pos.CENTER);
 	    rootMenu.setSpacing(10);
-	    Image logo = new Image("/images/logo.png");
+		
+	    //image du logo
+		Image logo = new Image("/images/logo.png");
 	    ImageView logoMenu = new ImageView(logo);
 	    rootMenu.getChildren().add(logoMenu);
 	
+	    //nouvelle partie
 	    Button boutonNouvellePartie = new Button("Nouvelle Partie!");
-	    boutonNouvellePartie.setOnMouseClicked(e -> {
+	    boutonNouvellePartie.setOnMouseClicked((click) -> {
 		    primaryStage.setScene(creerSceneJeu());
 	    });
 	    rootMenu.getChildren().add(boutonNouvellePartie);
 	
+	    //meilleurs scores
 	    Button boutonMeilleursScores = new Button ("Meilleurs Scores");
-	    boutonMeilleursScores.setOnAction(e -> {
+	    boutonMeilleursScores.setOnAction((click) -> {
 	    	primaryStage.setScene(creerSceneScores());
 	    });
 	    rootMenu.getChildren().add(boutonMeilleursScores);
 	    
+	    //effets sonores
+	    HBox effetsSonores = new HBox();
+	    effetsSonores.setAlignment(Pos.CENTER);
+	    effetsSonores.setSpacing(10);
+		rootMenu.getChildren().add(effetsSonores);
+		
+	    //son (musique)
+		CheckBox boutonSon = new CheckBox("Activer le son");
+		boutonSon.setTextFill(Color.WHITE);
+		boutonSon.setOnAction((click) -> {
+			son = !son;
+		});
+		effetsSonores.getChildren().add(boutonSon);
+		
+		//bruit (effets spéciaux)
+		CheckBox boutonBruit = new CheckBox("Activer les bruits");
+		boutonBruit.setTextFill(Color.WHITE);
+		boutonBruit.setOnAction((click) -> {
+			bruit = !bruit;
+		});
+		effetsSonores.getChildren().add(boutonBruit);
+	 
+		//raccourcis
 	    sceneMenu.setOnKeyPressed(e -> {
 		    switch (e.getCode()){
 			    case ESCAPE:
@@ -91,21 +134,26 @@ public class FishHunt extends Application {
     }
 	
 	/**
-	 *
+	 * La scène de jeu est celle où passent les poissons qu'il faut tirer avec la souris
 	 * @return la scène du jeu
 	 */
 	private Scene creerSceneJeu() {
-		Pane rootJeu = new Pane();
+		jeu.commencer();
 		
+		Pane rootJeu = new Pane();
+		Scene sceneJeu = new Scene(rootJeu, width, height);
+		
+		//root
 		BackgroundFill fillFondBleu = new BackgroundFill(Color.DARKBLUE, CornerRadii.EMPTY, Insets.EMPTY);
 		Background fondBleu = new Background(fillFondBleu);
 		rootJeu.setBackground(fondBleu);
-		Scene sceneJeu = new Scene(rootJeu, width, height);
 		
+		//canvas
 		Canvas canvas = new Canvas(width, height);
 		GraphicsContext context = canvas.getGraphicsContext2D();
 		rootJeu.getChildren().add(canvas);
 		
+		//gestion des bulles
 		AnimationTimer timerBulles = new AnimationTimer() {
 			private long startTime = 0;
 			private long lastTime = 0;
@@ -124,20 +172,34 @@ public class FishHunt extends Application {
 				
 				// les bulles sont crées à chaque 3 secondes à partir du début de la partie
 				if (deltaT > nbBulles * 3) {
-					controleur.creerBulles();
+					jeu.creerBulles();
 					nbBulles += 1;
 				}
-				controleur.update(dt);
-				controleur.draw(context);
+				jeu.update(dt);
+				jeu.draw(context);
 				
 				lastTime = now;
 			}
 		};
 		timerBulles.start();
 		
-		sceneJeu.setOnMouseClicked(e -> {
-			double xTir = e.getX(), yTir = e.getY();
-			controleur.clique(xTir, yTir);
+		//image de la cible
+		Image imgCible = new Image("/images/cible.png");
+		ImageView imageViewCible = new ImageView(imgCible);
+		imageViewCible.setFitHeight(2 * tailleMoitieCible);
+		imageViewCible.setFitWidth(2 * tailleMoitieCible);
+		rootJeu.getChildren().add(imageViewCible);
+		
+		rootJeu.setOnMouseMoved((event) -> {
+			double x = event.getX() - tailleMoitieCible;
+			double y = event.getY() - tailleMoitieCible;
+			imageViewCible.setX(x);
+			imageViewCible.setY(y);
+		});
+		
+		//action de tirer
+		sceneJeu.setOnMouseClicked(click -> {
+			double xTir = click.getX(), yTir = click.getY();
 			AnimationTimer timerShoot = new AnimationTimer() {
 				private long startTime = 0;
 				private long lastTime = 0;
@@ -158,9 +220,7 @@ public class FishHunt extends Application {
 					rayonTir -= vitesseTirCible * dt;
 					
 					if (deltaT > (double)tailleBalleTir/vitesseTirCible){
-						startTime = 0;
-						lastTime = 0;
-						rayonTir = tailleBalleTir;
+						jeu.tirer(xTir, yTir);
 						stop();
 					}
 					lastTime = now;
@@ -169,6 +229,7 @@ public class FishHunt extends Application {
 			timerShoot.start();
 		});
 		
+		//raccourcis debug
 		sceneJeu.setOnKeyPressed(e -> {
 			switch (e.getCode()){
 				case ESCAPE:
@@ -176,36 +237,23 @@ public class FishHunt extends Application {
 					primaryStage.setScene(creerSceneMenu());
 					break;
 				case H:
-					controleur.monterNiveau();
+					jeu.monterNiveau();
 					break;
 				case J:
-					controleur.monterScore();
+					jeu.monterScore();
 					break;
 				case K:
-					controleur.monterVie();
+					jeu.monterVie();
 					break;
 				case G:
-					controleur.baisserVie();
+					jeu.baisserVie();
 					break;
 				case L:
-					controleur.mourir();
+					jeu.mourir();
 					timerBulles.stop();
 					primaryStage.setScene(creerSceneScores());
 					break;
 			}
-		});
-		
-		Image imgCible = new Image("/images/cible.png");
-		ImageView imageViewCible = new ImageView(imgCible);
-		imageViewCible.setFitHeight(2 * tailleMoitieCible);
-		imageViewCible.setFitWidth(2 * tailleMoitieCible);
-		rootJeu.getChildren().add(imageViewCible);
-		
-		rootJeu.setOnMouseMoved((event) -> {
-			double x = event.getX() - tailleMoitieCible;
-			double y = event.getY() - tailleMoitieCible;
-			imageViewCible.setX(x);
-			imageViewCible.setY(y);
 		});
 		
 		return sceneJeu;
@@ -220,6 +268,17 @@ public class FishHunt extends Application {
 		VBox rootScores = new VBox();
 		Scene sceneScores = new Scene(rootScores, width, height, Color.GRAY);
 		
+		//root
+		rootScores.setAlignment(Pos.CENTER);
+		rootScores.setSpacing(10);
+		
+		//titre
+		Text titre = new Text("Meilleurs scores");
+		titre.setFont(new Font(28));
+		titre.setFill(Color.BLACK);
+		rootScores.getChildren().add(titre);
+		
+		//Retour au menu
 		Button boutonMenu = new Button("Menu");
 		boutonMenu.setOnAction(e -> {
 			primaryStage.setScene(creerSceneMenu());
