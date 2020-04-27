@@ -285,6 +285,7 @@ public class FishHunt extends Application {
 		});
 		rootScores.getChildren().add(boutonMenu);
 		
+		//raccouris
 		sceneScores.setOnKeyPressed(e -> {
 			switch (e.getCode()){
 				case ESCAPE:
