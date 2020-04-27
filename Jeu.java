@@ -33,7 +33,6 @@ public class Jeu {
      */
     public void creerBulles() {
         this.bulles = new Bulles(width, height);
-        //System.out.println("creerBulles()");
     }
     
     public void update(double dt){
