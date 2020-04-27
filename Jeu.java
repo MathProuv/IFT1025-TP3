@@ -73,7 +73,7 @@ public class Jeu {
         context.setFont(new Font(30));
         context.setTextAlign(TextAlignment.CENTER);
         context.setFill(Color.RED);
-        context.fillText(((Integer)score).toString(), width/2, 60);
+        context.fillText(((Integer)score).toString(), width/2.0, 60);
         
         for (int i = 0; i<nbViesMax; i++){
             int xImageI = xImage1Score + i * (tailleImgScore+espacementImgScore);
