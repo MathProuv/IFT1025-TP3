@@ -175,7 +175,7 @@ public class FishHunt extends Application {
 					jeu.creerBulles();
 					nbBulles += 1;
 				}
-				jeu.update(dt);
+				jeu.update(dt, deltaT);
 				jeu.draw(context);
 				
 				lastTime = now;
