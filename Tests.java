@@ -8,10 +8,12 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
+import java.util.ArrayList;
 
 public class Tests extends Application {
     
     private Stage primaryStage;
+    private ArrayList<Integer> arrayInt = new ArrayList<Integer>();
     
     public static void main(String[] args) {
         launch(args);
@@ -25,6 +27,10 @@ public class Tests extends Application {
         primaryStage.setScene(creerSceneA());
         
         primaryStage.show();
+
+        for (int nombre : arrayInt) {
+            System.out.println(nombre);
+        }
     }
     
     private Scene creerSceneA() {

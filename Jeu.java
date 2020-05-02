@@ -12,21 +12,22 @@ import static java.lang.Math.pow;
 public class Jeu {
     private final int width, height;
     private final Modele modele;
+    private FishHunt vue;
     
     private final int nbViesMax = 3;
     private final Image imgScore = new Image("/images/fish/00.png");
     private Image imagesScore[] = new Image[nbViesMax];
+    private int scoreDansCeNiveau;
     private final int tailleImgScore = 30, espacementImgScore = 30, xImage1Score;
     private final int scoreMaxParNiveau = 5;
-    private int scoreDansCeNiveau;
     
     private Bulles bulles;
     private ArrayList<Poisson> poissons;
     // nombre de poissons depuis le début de la partie
     private int nbPoissons = 0;
     private int nbPoissonsSpecial = 0;
-    private long startTimeLvl2;
-    
+    private double deltaTLvl;
+
     private int niveau;
     private int score;
     private int nbVies;
@@ -35,10 +36,11 @@ public class Jeu {
     /**
      * Constructeur d'un jeu
      */
-    Jeu(int width, int height){
+    Jeu(int width, int height, FishHunt vue){
         this.width = width;
         this.height = height;
         this.modele = new Modele(width, height);
+        this.vue = vue;
         this.xImage1Score = width/2 - (nbViesMax*tailleImgScore + (nbViesMax-1)*espacementImgScore)/2;
     }
     
@@ -46,14 +48,15 @@ public class Jeu {
      * commencer une partie
      */
     public void commencer(){
-        this.niveau = 0;
+        this.niveau = 1;
         this.score = 0;
         this.nbVies = nbViesMax;
+        this.vitesse = 100*pow(this.niveau,1/3.0)+200;
         for (int i = 0; i<nbViesMax; i++)
             imagesScore[i] = imgScore;
         this.scoreDansCeNiveau = 0;
-        monterNiveau();
         this.poissons = new ArrayList<Poisson>();
+        this.deltaTLvl = 0;
     }
     
     /**
@@ -69,10 +72,7 @@ public class Jeu {
     public void ajouterPoisson() {
         Poisson poisson = new Poisson(width, height, vitesse);
         this.poissons.add(poisson);
-        nbPoissons += 1;
-        //System.out.println(poisson.getX());
-        //System.out.println(poisson.getY());
-
+        this.nbPoissons += 1;
     }
 
     /**
@@ -80,12 +80,10 @@ public class Jeu {
      */
     public void ajouterPoissonSpecial() {
         Random rand = new Random();
-        int type = rand.nextInt();
-        Poisson poisson = type == 0 ? new Crabe(width, height, vitesse) : new Étoile(width, height, vitesse);
+        boolean type = rand.nextBoolean();
+        Poisson poisson = type ? new Crabe(width, height, vitesse) : new Étoile(width, height, vitesse);
         this.poissons.add(poisson);
         this.nbPoissonsSpecial += 1;
-        //System.out.println(poisson.getX());
-        //System.out.println(poisson.getY());
     }
 
     /**
@@ -97,27 +95,8 @@ public class Jeu {
      *
      * @param dt temps entre les deux frames
      */
-    public void update(double dt, double deltaT){
-        if (this.niveau == 2)
-            // TODO : à changer pcq ça va update deltaT pdt tout le niveau 2, mais on veut seulement que ça se fasse au début du niveau
-            startTimeLvl2 = (long) deltaT;
-
-        if (deltaT > 3*nbPoissons)
-            ajouterPoisson();
-
-        if (deltaT > 5*nbPoissonsSpecial)
-            ajouterPoissonSpecial();
-            // TODO
-
-        //System.out.println(poissons.get(0).getX());
-        //System.out.println(poissons.get(0).getY());
-        //System.out.println(this.vitesse);
-        //TODO : pb de placement des poissons
-
-        bulles.update(dt);
-        for (Poisson poisson : poissons)
-            poisson.update(dt);
-
+    public void update(double dt){
+        modele.update(this, dt);
     }
     
     /**
@@ -125,20 +104,20 @@ public class Jeu {
      * @param context du canvas à dessiner
      */
     public void draw(GraphicsContext context){
+
         context.clearRect(0, 0, width, height);
-        bulles.draw(context);
-        for (Poisson poisson : poissons)
-            poisson.draw(context);
-    
-        context.setFont(new Font(30));
-        context.setTextAlign(TextAlignment.CENTER);
-        context.setFill(Color.RED);
-        context.fillText(((Integer)score).toString(), width/2.0, 60);
-        
+
         for (int i = 0; i<nbViesMax; i++){
             int xImageI = xImage1Score + i * (tailleImgScore+espacementImgScore);
             context.drawImage(imagesScore[i], xImageI, 100, tailleImgScore, tailleImgScore);
         }
+
+        context.setFont(new Font(30));
+        context.setTextAlign(TextAlignment.CENTER);
+        context.setFill(Color.RED);
+        context.fillText(((Integer)score).toString(), width/2.0, 60);
+
+        modele.draw(context, this);
     }
     
     /**
@@ -147,7 +126,7 @@ public class Jeu {
      * @param yTir coordonnée y du tir
      */
     public void tirer(double xTir, double yTir) {
-        System.out.println("on tire en ("+xTir+","+yTir+")");
+        modele.tirer(xTir, yTir, this);
     }
     
     /**
@@ -158,6 +137,11 @@ public class Jeu {
         this.vitesse = 100*pow(this.niveau,1/3.0)+200;
         this.scoreDansCeNiveau = 0;
         System.out.println("Niveau = " + this.niveau);
+
+        // on réinitialise les quantités de poissons et le temps depuis le début du niveau
+        this.deltaTLvl = 0;
+        this.nbPoissonsSpecial = 0;
+        this.nbPoissons = 0;
     }
     
     /**
@@ -193,11 +177,28 @@ public class Jeu {
         if (nbVies <= 0)
             mourir();
     }
-    
+
     /**
      * Faire perdre la partie
      */
     public void mourir() {
-        System.out.println("T'es mort !!!");
+        modele.mourir();
+        vue.mourir();
     }
+
+    public void setDeltaTLvl(double deltaTLvl) { this.deltaTLvl = deltaTLvl; }
+
+    public double getDeltaLvl() { return this.deltaTLvl; }
+
+    public int getNbPoissons() { return this.nbPoissons; }
+
+    public int getNbPoissonsSpecial() { return this.nbPoissonsSpecial; }
+
+    public int getNiveau() { return this.niveau; }
+
+    public Bulles getBulles() { return this.bulles; }
+
+    public ArrayList<Poisson> getPoissons() { return this.poissons; }
+
+    public int getScore() { return this.score; }
 }

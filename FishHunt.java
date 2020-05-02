@@ -14,6 +14,7 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 
 /**
@@ -22,7 +23,7 @@ import javafx.stage.Stage;
 public class FishHunt extends Application {
     private final int width = 640, height = 480;
 	
-	private final Jeu jeu = new Jeu(width, height);
+	private final Jeu jeu = new Jeu(width, height, this);
 	
 	private Stage primaryStage;
     
@@ -154,7 +155,7 @@ public class FishHunt extends Application {
 		rootJeu.getChildren().add(canvas);
 		
 		//gestion des bulles
-		AnimationTimer timerBulles = new AnimationTimer() {
+		AnimationTimer timer = new AnimationTimer() {
 			private long startTime = 0;
 			private long lastTime = 0;
 			private int nbBulles = 0;
@@ -175,13 +176,13 @@ public class FishHunt extends Application {
 					jeu.creerBulles();
 					nbBulles += 1;
 				}
-				jeu.update(dt, deltaT);
+				jeu.update(dt);
 				jeu.draw(context);
 				
 				lastTime = now;
 			}
 		};
-		timerBulles.start();
+		timer.start();
 		
 		//image de la cible
 		Image imgCible = new Image("/images/cible.png");
@@ -219,7 +220,7 @@ public class FishHunt extends Application {
 					context.fillOval(xTir-rayonTir/2.0, yTir-rayonTir/2.0, rayonTir, rayonTir);
 					rayonTir -= vitesseTirCible * dt;
 					
-					if (deltaT > (double)tailleBalleTir/vitesseTirCible){
+					if (deltaT > (double)tailleBalleTir/vitesseTirCible) {
 						jeu.tirer(xTir, yTir);
 						stop();
 					}
@@ -233,7 +234,7 @@ public class FishHunt extends Application {
 		sceneJeu.setOnKeyPressed(e -> {
 			switch (e.getCode()){
 				case ESCAPE:
-					timerBulles.stop();
+					timer.stop();
 					primaryStage.setScene(creerSceneMenu());
 					break;
 				case H:
@@ -250,8 +251,7 @@ public class FishHunt extends Application {
 					break;
 				case L:
 					jeu.mourir();
-					timerBulles.stop();
-					primaryStage.setScene(creerSceneScores());
+					timer.stop();
 					break;
 			}
 		});
@@ -298,5 +298,41 @@ public class FishHunt extends Application {
 		
 		return sceneScores;
     }
-    
+
+    void mourir() {
+
+		BorderPane rootGameOver = new BorderPane();
+		Scene sceneGameOver = new Scene(rootGameOver, width, height);
+
+		//root
+		BackgroundFill fillFondNoir = new BackgroundFill(Color.DARKBLUE, CornerRadii.EMPTY, Insets.EMPTY);
+		Background fondNoir = new Background(fillFondNoir);
+		rootGameOver.setBackground(fondNoir);
+
+		Text gameOverText = new Text("Game Over\n( ͡° ʖ̯ ͡°)");
+		gameOverText.setFill(Color.WHITE);
+		gameOverText.setTextAlignment(TextAlignment.CENTER);
+		gameOverText.setFont(new Font("Comic Sans MS", 80));
+		rootGameOver.setCenter(gameOverText);
+
+		primaryStage.setScene(sceneGameOver);
+
+		AnimationTimer gameOver = new AnimationTimer() {
+			double startTime;
+
+			@Override
+			public void handle(long now) {
+				if (startTime == 0) {
+					startTime = now;
+					return;
+				}
+
+				if (now - startTime > 3e9) {
+					primaryStage.setScene(creerSceneScores());
+					stop();
+				}
+			}
+		};
+		gameOver.start();
+	}
 }

@@ -1,0 +1,13 @@
++ faire fonctionner le timer des poissons
++ bouger fonctions du jeu dans le modèle
++ mécanisme de mort
++ mécanisme de tir
++ retirer les poissons
+- gestion des meilleurs scores
+- mouvement crabe
+- mouvement étoile
+- 3 secondes d'affichage
+	+ game over
+	- monter de niveau
+- couleur des poissons
+- son
