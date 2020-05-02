@@ -7,7 +7,7 @@
 - mouvement crabe
 - mouvement étoile
 - 3 secondes d'affichage
-	+ game over
+	- game over (régler pb de timer)
 	- monter de niveau
-- couleur des poissons
++ couleur des poissons
 - son

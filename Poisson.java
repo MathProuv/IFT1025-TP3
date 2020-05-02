@@ -46,12 +46,13 @@ public class Poisson {
         this.image = imagesList[randImage];
         if (!direction)
             this.image = ImageHelpers.flop(this.image);
+        this.image = ImageHelpers.colorize(image, Color.hsb(Math.random()*360, 0.8, 0.8));
     }
 
     public void draw(GraphicsContext context) {
         context.drawImage(this.image, x, y, taille, taille);
-        context.setFill(Color.RED);
-        context.fillRect(x, y, 5, 5);
+        //context.setFill(Color.RED);
+        //context.fillRect(x, y, 5, 5);
     }
 
     public void update(double dt) {

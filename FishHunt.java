@@ -155,11 +155,11 @@ public class FishHunt extends Application {
 		rootJeu.getChildren().add(canvas);
 		
 		//gestion des bulles
-		AnimationTimer timer = new AnimationTimer() {
+		AnimationTimer timerJeu = new AnimationTimer() {
 			private long startTime = 0;
 			private long lastTime = 0;
 			private int nbBulles = 0;
-			
+
 			@Override
 			public void handle(long now) {
 				if (startTime == 0) {
@@ -167,10 +167,10 @@ public class FishHunt extends Application {
 					lastTime = now;
 					return;
 				}
-				
+
 				double deltaT = (now - startTime)*1e-9;
 				double dt = (now - lastTime)*1e-9;
-				
+
 				// les bulles sont crées à chaque 3 secondes à partir du début de la partie
 				if (deltaT > nbBulles * 3) {
 					jeu.creerBulles();
@@ -178,11 +178,11 @@ public class FishHunt extends Application {
 				}
 				jeu.update(dt);
 				jeu.draw(context);
-				
+
 				lastTime = now;
 			}
 		};
-		timer.start();
+		timerJeu.start();
 		
 		//image de la cible
 		Image imgCible = new Image("/images/cible.png");
@@ -234,7 +234,7 @@ public class FishHunt extends Application {
 		sceneJeu.setOnKeyPressed(e -> {
 			switch (e.getCode()){
 				case ESCAPE:
-					timer.stop();
+					timerJeu.stop();
 					primaryStage.setScene(creerSceneMenu());
 					break;
 				case H:
@@ -251,7 +251,7 @@ public class FishHunt extends Application {
 					break;
 				case L:
 					jeu.mourir();
-					timer.stop();
+					timerJeu.stop();
 					break;
 			}
 		});
