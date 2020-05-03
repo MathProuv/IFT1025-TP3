@@ -1,13 +1,14 @@
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.control.Button;
-import javafx.scene.control.CheckBox;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
@@ -16,6 +17,10 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
+
+import java.io.*;
+import java.util.ArrayList;
+import java.util.Scanner;
 
 /**
  * @author Mathilde Prouvost et Augustine Poirier
@@ -31,6 +36,37 @@ public class FishHunt extends Application {
     private final int tailleBalleTir = 50, vitesseTirCible = 300;
     
     private boolean son = false, bruit = false;
+
+	private Canvas canvas = new Canvas(width, height);
+	private GraphicsContext context = canvas.getGraphicsContext2D();
+
+	private AnimationTimer timerJeu = new AnimationTimer() {
+		private long startTime = 0;
+		private long lastTime = 0;
+		private int nbBulles = 0;
+
+		@Override
+		public void handle(long now) {
+			if (startTime == 0) {
+				startTime = now;
+				lastTime = now;
+				return;
+			}
+
+			double deltaT = (now - startTime)*1e-9;
+			double dt = (now - lastTime)*1e-9;
+
+			// les bulles sont crées à chaque 3 secondes à partir du début de la partie
+			if (deltaT > nbBulles * 3) {
+				jeu.creerBulles();
+				nbBulles += 1;
+			}
+			jeu.update(dt);
+			jeu.draw(context);
+
+			lastTime = now;
+		}
+	};
 	
 	/**
 	 * Fonction main principale qui lance l'application
@@ -86,15 +122,19 @@ public class FishHunt extends Application {
 	    //nouvelle partie
 	    Button boutonNouvellePartie = new Button("Nouvelle Partie!");
 	    boutonNouvellePartie.setOnMouseClicked((click) -> {
-		    primaryStage.setScene(creerSceneJeu());
+		    primaryStage.setScene(creerSceneJeu(true));
 	    });
 	    rootMenu.getChildren().add(boutonNouvellePartie);
 	
 	    //meilleurs scores
 	    Button boutonMeilleursScores = new Button ("Meilleurs Scores");
 	    boutonMeilleursScores.setOnAction((click) -> {
-	    	primaryStage.setScene(creerSceneScores());
-	    });
+			try {
+				primaryStage.setScene(creerSceneScores());
+			} catch (FileNotFoundException e) {
+				System.out.println("Erreur de lecture du fichier");;
+			}
+		});
 	    rootMenu.getChildren().add(boutonMeilleursScores);
 	    
 	    //effets sonores
@@ -126,7 +166,7 @@ public class FishHunt extends Application {
 				    Platform.exit();
 				    break;
 			    case N:
-				    primaryStage.setScene(creerSceneJeu());
+				    primaryStage.setScene(creerSceneJeu(true));
 				    break;
 		    }
 	    });
@@ -138,9 +178,14 @@ public class FishHunt extends Application {
 	 * La scène de jeu est celle où passent les poissons qu'il faut tirer avec la souris
 	 * @return la scène du jeu
 	 */
-	private Scene creerSceneJeu() {
-		jeu.commencer();
-		
+	private Scene creerSceneJeu(boolean debut) {
+
+		if (debut)
+			jeu.commencer();
+
+		// on commence le jeu
+		timerJeu.start();
+
 		Pane rootJeu = new Pane();
 		Scene sceneJeu = new Scene(rootJeu, width, height);
 		
@@ -150,39 +195,7 @@ public class FishHunt extends Application {
 		rootJeu.setBackground(fondBleu);
 		
 		//canvas
-		Canvas canvas = new Canvas(width, height);
-		GraphicsContext context = canvas.getGraphicsContext2D();
 		rootJeu.getChildren().add(canvas);
-		
-		//gestion des bulles
-		AnimationTimer timerJeu = new AnimationTimer() {
-			private long startTime = 0;
-			private long lastTime = 0;
-			private int nbBulles = 0;
-
-			@Override
-			public void handle(long now) {
-				if (startTime == 0) {
-					startTime = now;
-					lastTime = now;
-					return;
-				}
-
-				double deltaT = (now - startTime)*1e-9;
-				double dt = (now - lastTime)*1e-9;
-
-				// les bulles sont crées à chaque 3 secondes à partir du début de la partie
-				if (deltaT > nbBulles * 3) {
-					jeu.creerBulles();
-					nbBulles += 1;
-				}
-				jeu.update(dt);
-				jeu.draw(context);
-
-				lastTime = now;
-			}
-		};
-		timerJeu.start();
 		
 		//image de la cible
 		Image imgCible = new Image("/images/cible.png");
@@ -251,7 +264,6 @@ public class FishHunt extends Application {
 					break;
 				case L:
 					jeu.mourir();
-					timerJeu.stop();
 					break;
 			}
 		});
@@ -263,7 +275,7 @@ public class FishHunt extends Application {
 	 *
 	 * @return la scène des scores
 	 */
-	private Scene creerSceneScores() {
+	private Scene creerSceneScores() throws FileNotFoundException {
 		
 		VBox rootScores = new VBox();
 		Scene sceneScores = new Scene(rootScores, width, height, Color.GRAY);
@@ -277,6 +289,53 @@ public class FishHunt extends Application {
 		titre.setFont(new Font(28));
 		titre.setFill(Color.BLACK);
 		rootScores.getChildren().add(titre);
+
+		//liste de scores
+		ArrayList<String> fichierScores = new ArrayList<String>();
+
+		try {
+			Scanner scan = new Scanner(new FileInputStream("scores.txt"));
+			while (scan.hasNextInt()) {
+				int scoreFichier = scan.nextInt();
+				String nomFichier = scan.nextLine().substring(1);
+				String temp = nomFichier + " " + scoreFichier + "";
+				fichierScores.add(temp);
+			}
+		} catch (FileNotFoundException ex) {
+			System.out.println("Erreur de lecture du fichier");
+		}
+
+		ObservableList<String> scores = FXCollections.observableArrayList(fichierScores);
+		ListView<String> scoreListView = new ListView<String>(scores);
+		rootScores.getChildren().add(scoreListView);
+
+		//demander le score
+		if (jeu.verifScore()) {
+			int score = jeu.getScore();
+			HBox inputNom = new HBox();
+			inputNom.setAlignment(Pos.CENTER);
+
+			TextField champNom = new TextField();
+			Text texte = new Text();
+			texte.setText("a fait " + score + " points!");
+			Button ajouter = new Button("Ajouter");
+
+
+			inputNom.getChildren().add(new Label("Votre nom : "));
+			inputNom.getChildren().add(champNom);
+			inputNom.getChildren().add(texte);
+			inputNom.getChildren().add(ajouter);
+			rootScores.getChildren().add(inputNom);
+
+			ajouter.setOnAction((e) -> {
+				String nom = champNom.getText();
+				try {
+					jeu.updateScore(nom);
+				} catch (FileNotFoundException ex) {
+					System.out.println("Erreur à la lecture du fichier");;
+				}
+			});
+		}
 		
 		//Retour au menu
 		Button boutonMenu = new Button("Menu");
@@ -292,14 +351,17 @@ public class FishHunt extends Application {
 					Platform.exit();
 					break;
 				case N:
-					primaryStage.setScene(creerSceneJeu());
+					primaryStage.setScene(creerSceneJeu(true));
 			}
 		});
+
 		
 		return sceneScores;
     }
 
     void mourir() {
+
+		timerJeu.stop();
 
 		BorderPane rootGameOver = new BorderPane();
 		Scene sceneGameOver = new Scene(rootGameOver, width, height);
@@ -328,11 +390,55 @@ public class FishHunt extends Application {
 				}
 
 				if (now - startTime > 3e9) {
-					primaryStage.setScene(creerSceneScores());
+					try {
+						primaryStage.setScene(creerSceneScores());
+					} catch (FileNotFoundException e) {
+						System.out.println("Erreur de lecture du fichier");;
+					}
 					stop();
 				}
 			}
 		};
 		gameOver.start();
 	}
+
+	void monterNiveau(int prochainNiveau) {
+		timerJeu.stop();
+
+		BorderPane rootLvlUp = new BorderPane();
+		Scene sceneMonterNiveau = new Scene(rootLvlUp, width, height);
+
+		//root
+		BackgroundFill fillFondBleu = new BackgroundFill(Color.DARKBLUE, CornerRadii.EMPTY, Insets.EMPTY);
+		Background fondBleu = new Background(fillFondBleu);
+		rootLvlUp.setBackground(fondBleu);
+
+		Text lvlUpText = new Text("Niveau " + prochainNiveau);
+		lvlUpText.setFill(Color.WHITE);
+		lvlUpText.setTextAlignment(TextAlignment.CENTER);
+		lvlUpText.setFont(new Font(80));
+		rootLvlUp.setCenter(lvlUpText);
+
+		primaryStage.setScene(sceneMonterNiveau);
+
+		AnimationTimer lvlUpTimer = new AnimationTimer() {
+			double startTime;
+
+			@Override
+			public void handle(long now) {
+				if (startTime == 0) {
+					startTime = now;
+					return;
+				}
+
+				if (now - startTime > 3e9) {
+					primaryStage.setScene(creerSceneJeu(false));
+					stop();
+				}
+			}
+		};
+		lvlUpTimer.start();
+	}
+
+
 }

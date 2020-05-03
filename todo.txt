@@ -3,11 +3,14 @@
 + mécanisme de mort
 + mécanisme de tir
 + retirer les poissons
-- gestion des meilleurs scores
++ gestion des meilleurs scores
++ afficher les meilleurs scores
++ changer le path du fichier pour les scores
++ 3 secondes d'affichage
+	+ game over
+	+ monter de niveau
+- pb de timing des poissons en changeant de niveau
 - mouvement crabe
 - mouvement étoile
-- 3 secondes d'affichage
-	- game over (régler pb de timer)
-	- monter de niveau
 + couleur des poissons
 - son

@@ -5,8 +5,10 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.TextAlignment;
 
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.Scanner;
 
 import static java.lang.Math.pow;
 
@@ -57,6 +59,8 @@ public class Jeu {
             imagesScore[i] = imgScore;
         this.scoreDansCeNiveau = 0;
         this.poissons = new ArrayList<Poisson>();
+        this.nbPoissons = 0;
+        this.nbPoissonsSpecial = 0;
         this.deltaTLvl = 0;
     }
     
@@ -143,6 +147,8 @@ public class Jeu {
         this.deltaTLvl = 0;
         this.nbPoissonsSpecial = 0;
         this.nbPoissons = 0;
+
+        vue.monterNiveau(niveau);
     }
     
     /**
@@ -185,6 +191,84 @@ public class Jeu {
     public void mourir() {
         modele.mourir();
         vue.mourir();
+    }
+
+    public boolean verifScore() {
+        try {
+            Scanner scan = new Scanner(new FileInputStream("scores.txt"));
+            int scoreFichier = 0;
+            while (scan.hasNext()) {
+                scoreFichier = scan.nextInt();
+                scan.nextLine();
+            }
+            return (score > scoreFichier);
+
+        } catch (FileNotFoundException ex) {
+            System.out.println("Erreur à l'ouverture du fichier");
+        }
+
+        return false;
+    }
+
+    /**
+     * Ajoute un nouveau score dans le fichier scores.txt
+     * @param nom le nom du joueur
+     */
+    public void updateScore(String nom) throws FileNotFoundException {
+
+        try {
+            ArrayList<Integer> listScore = new ArrayList<Integer>();
+            ArrayList<String> listNom = new ArrayList<String>();
+            Scanner scan = new Scanner(new FileInputStream("scores.txt"));
+            while (scan.hasNextInt()) {
+                int scoreFichier = scan.nextInt();
+                listScore.add(scoreFichier);
+                String nomFichier = scan.nextLine().substring(1);
+                listNom.add(nomFichier);
+            }
+
+
+            // on parcourt la liste des scores en commençant par le bas
+            int indexScore;
+            boolean isBest = true;
+            for (indexScore = listScore.size() - 1; indexScore >= 0; indexScore--) {
+                int curScore = listScore.get(indexScore);
+                if (score < curScore) {
+                    listScore.add(indexScore+1, score);
+                    listNom.add(indexScore+1, nom);
+                    isBest = false;
+                    break;
+                }
+            }
+
+            // si score est le meilleur score
+            if (isBest) {
+                listScore.add(0, score);
+                listNom.add(0, nom);
+            }
+
+            // on vérifie que la liste contient au maximum 10 scores
+            if (listScore.size() > 9) {
+                listScore.remove(10);
+                listNom.remove(10);
+            }
+
+            // on réécrit le fichier
+            try {
+                FileWriter wr = new FileWriter("scores.txt");
+                BufferedWriter writer = new BufferedWriter(wr);
+
+                for (int i=0; i<listScore.size(); i++)
+                    writer.append(listScore.get(i) + " " + listNom.get(i) + "\n");
+
+                writer.close();
+
+            } catch (IOException ex) {
+                System.out.println("Erreur avec le fichier");
+            }
+        } catch (FileNotFoundException ex) {
+            System.out.println("Erreur à l'ouverture du fichier");
+        }
     }
 
     public void setDeltaTLvl(double deltaTLvl) { this.deltaTLvl = deltaTLvl; }

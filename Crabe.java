@@ -7,5 +7,4 @@ public class Crabe extends Poisson {
         this.ay = 0;
         this.image = new Image("/images/crabe.png");
     }
-
 }
