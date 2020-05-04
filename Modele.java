@@ -63,8 +63,6 @@ public class Modele {
          Bulles bulles = jeu.getBulles();
          ArrayList<Poisson> poissons = jeu.getPoissons();
 
-        jeu.setDeltaTLvl(jeu.getDeltaLvl() + dt);
-
         if (deltaTLevel > 3*nbPoissons)
             jeu.ajouterPoisson();
 
@@ -88,6 +86,10 @@ public class Modele {
         for (Poisson poisson : poissonsSortis) {
             poissons.remove(poisson);
         }
+
+        jeu.setDeltaTLvl(jeu.getDeltaLvl() + dt);
+        System.out.println("dt : " + dt);
+        System.out.println("deltaT du level : " + deltaTLevel + "\n");
     }
 
     public void draw(GraphicsContext context, Jeu jeu) {

@@ -26,35 +26,37 @@ import java.util.Scanner;
  * @author Mathilde Prouvost et Augustine Poirier
  */
 public class FishHunt extends Application {
-    private final int width = 640, height = 480;
-	
+	private final int width = 640, height = 480;
+
 	private final Jeu jeu = new Jeu(width, height, this);
-	
+
 	private Stage primaryStage;
-    
-    private final int tailleMoitieCible = 50/2;
-    private final int tailleBalleTir = 50, vitesseTirCible = 300;
-    
-    private boolean son = false, bruit = false;
+
+	private final int tailleMoitieCible = 50 / 2;
+	private final int tailleBalleTir = 50, vitesseTirCible = 300;
+
+	private boolean son = false, bruit = false;
 
 	private Canvas canvas = new Canvas(width, height);
 	private GraphicsContext context = canvas.getGraphicsContext2D();
 
-	private AnimationTimer timerJeu = new AnimationTimer() {
+	public AnimationTimer timerJeu = new AnimationTimer() {
 		private long startTime = 0;
 		private long lastTime = 0;
 		private int nbBulles = 0;
 
+
 		@Override
 		public void handle(long now) {
-			if (startTime == 0) {
+			if (startTime == 0 || lastTime == 0) {
 				startTime = now;
 				lastTime = now;
 				return;
 			}
 
-			double deltaT = (now - startTime)*1e-9;
-			double dt = (now - lastTime)*1e-9;
+			double deltaT = (now - startTime) * 1e-9;
+			System.out.println("deltaT de timerJeu : " + deltaT);
+			double dt = (now - lastTime) * 1e-9;
 
 			// les bulles sont crées à chaque 3 secondes à partir du début de la partie
 			if (deltaT > nbBulles * 3) {
@@ -67,90 +69,96 @@ public class FishHunt extends Application {
 			lastTime = now;
 		}
 	};
-	
+
 	/**
 	 * Fonction main principale qui lance l'application
+	 *
 	 * @param args
 	 */
-	public static void main(String[] args) { launch(args); }
-	
+	public static void main(String[] args) {
+		launch(args);
+	}
+
 	/**
 	 * lancement de l'application avec une scène de menu
+	 *
 	 * @param primaryStage
 	 */
-    @Override
-    public void start(Stage primaryStage) {
-    	
-    	this.primaryStage = primaryStage;
-    	
-        primaryStage.setTitle("Fish Hunt");
-        primaryStage.setResizable(false);
+	@Override
+	public void start(Stage primaryStage) {
 
-        Image icone = new Image("/images/cible.png");
-        primaryStage.getIcons().add(icone);
-	
-	    primaryStage.setScene(creerSceneMenu());
+		this.primaryStage = primaryStage;
 
-        primaryStage.show();
-    }
-	
+		primaryStage.setTitle("Fish Hunt");
+		primaryStage.setResizable(false);
+
+		Image icone = new Image("/images/cible.png");
+		primaryStage.getIcons().add(icone);
+
+		primaryStage.setScene(creerSceneMenu());
+
+		primaryStage.show();
+	}
+
 	/**
 	 * La scène du menu permet de choisir entre les différentes scènes
 	 * On a ajouté un bouton pour activer/désactiver le son et les bruitages (par défaut, ils sont éteints)
+	 *
 	 * @return la scène du menu
 	 */
-	private Scene creerSceneMenu(){
+	private Scene creerSceneMenu() {
 		//par défaut, les effets sonores sont désactivés
 		this.son = false;
 		this.bruit = false;
-	
-	    VBox rootMenu = new VBox();
+
+		VBox rootMenu = new VBox();
 		Scene sceneMenu = new Scene(rootMenu, width, height);
-	 
+
 		//root
-	    BackgroundFill fillFondBleu = new BackgroundFill(Color.DARKBLUE, CornerRadii.EMPTY, Insets.EMPTY);
-	    Background fondBleu = new Background(fillFondBleu);
-	    rootMenu.setBackground(fondBleu);
-	    rootMenu.setAlignment(Pos.CENTER);
-	    rootMenu.setSpacing(10);
-		
-	    //image du logo
+		BackgroundFill fillFondBleu = new BackgroundFill(Color.DARKBLUE, CornerRadii.EMPTY, Insets.EMPTY);
+		Background fondBleu = new Background(fillFondBleu);
+		rootMenu.setBackground(fondBleu);
+		rootMenu.setAlignment(Pos.CENTER);
+		rootMenu.setSpacing(10);
+
+		//image du logo
 		Image logo = new Image("/images/logo.png");
-	    ImageView logoMenu = new ImageView(logo);
-	    rootMenu.getChildren().add(logoMenu);
-	
-	    //nouvelle partie
-	    Button boutonNouvellePartie = new Button("Nouvelle Partie!");
-	    boutonNouvellePartie.setOnMouseClicked((click) -> {
-		    primaryStage.setScene(creerSceneJeu(true));
-	    });
-	    rootMenu.getChildren().add(boutonNouvellePartie);
-	
-	    //meilleurs scores
-	    Button boutonMeilleursScores = new Button ("Meilleurs Scores");
-	    boutonMeilleursScores.setOnAction((click) -> {
+		ImageView logoMenu = new ImageView(logo);
+		rootMenu.getChildren().add(logoMenu);
+
+		//nouvelle partie
+		Button boutonNouvellePartie = new Button("Nouvelle Partie!");
+		boutonNouvellePartie.setOnMouseClicked((click) -> {
+			primaryStage.setScene(creerSceneJeu(true));
+		});
+		rootMenu.getChildren().add(boutonNouvellePartie);
+
+		//meilleurs scores
+		Button boutonMeilleursScores = new Button("Meilleurs Scores");
+		boutonMeilleursScores.setOnAction((click) -> {
 			try {
 				primaryStage.setScene(creerSceneScores());
 			} catch (FileNotFoundException e) {
-				System.out.println("Erreur de lecture du fichier");;
+				System.out.println("Erreur de lecture du fichier");
+				;
 			}
 		});
-	    rootMenu.getChildren().add(boutonMeilleursScores);
-	    
-	    //effets sonores
-	    HBox effetsSonores = new HBox();
-	    effetsSonores.setAlignment(Pos.CENTER);
-	    effetsSonores.setSpacing(10);
+		rootMenu.getChildren().add(boutonMeilleursScores);
+
+		//effets sonores
+		HBox effetsSonores = new HBox();
+		effetsSonores.setAlignment(Pos.CENTER);
+		effetsSonores.setSpacing(10);
 		rootMenu.getChildren().add(effetsSonores);
-		
-	    //son (musique)
+
+		//son (musique)
 		CheckBox boutonSon = new CheckBox("Activer le son");
 		boutonSon.setTextFill(Color.WHITE);
 		boutonSon.setOnAction((click) -> {
 			son = !son;
 		});
 		effetsSonores.getChildren().add(boutonSon);
-		
+
 		//bruit (effets spéciaux)
 		CheckBox boutonBruit = new CheckBox("Activer les bruits");
 		boutonBruit.setTextFill(Color.WHITE);
@@ -158,24 +166,25 @@ public class FishHunt extends Application {
 			bruit = !bruit;
 		});
 		effetsSonores.getChildren().add(boutonBruit);
-	 
+
 		//raccourcis
-	    sceneMenu.setOnKeyPressed(e -> {
-		    switch (e.getCode()){
-			    case ESCAPE:
-				    Platform.exit();
-				    break;
-			    case N:
-				    primaryStage.setScene(creerSceneJeu(true));
-				    break;
-		    }
-	    });
-	
-	    return sceneMenu;
-    }
-	
+		sceneMenu.setOnKeyPressed(e -> {
+			switch (e.getCode()) {
+				case ESCAPE:
+					Platform.exit();
+					break;
+				case N:
+					primaryStage.setScene(creerSceneJeu(true));
+					break;
+			}
+		});
+
+		return sceneMenu;
+	}
+
 	/**
 	 * La scène de jeu est celle où passent les poissons qu'il faut tirer avec la souris
+	 *
 	 * @return la scène du jeu
 	 */
 	private Scene creerSceneJeu(boolean debut) {
@@ -188,29 +197,29 @@ public class FishHunt extends Application {
 
 		Pane rootJeu = new Pane();
 		Scene sceneJeu = new Scene(rootJeu, width, height);
-		
+
 		//root
 		BackgroundFill fillFondBleu = new BackgroundFill(Color.DARKBLUE, CornerRadii.EMPTY, Insets.EMPTY);
 		Background fondBleu = new Background(fillFondBleu);
 		rootJeu.setBackground(fondBleu);
-		
+
 		//canvas
 		rootJeu.getChildren().add(canvas);
-		
+
 		//image de la cible
 		Image imgCible = new Image("/images/cible.png");
 		ImageView imageViewCible = new ImageView(imgCible);
 		imageViewCible.setFitHeight(2 * tailleMoitieCible);
 		imageViewCible.setFitWidth(2 * tailleMoitieCible);
 		rootJeu.getChildren().add(imageViewCible);
-		
+
 		rootJeu.setOnMouseMoved((event) -> {
 			double x = event.getX() - tailleMoitieCible;
 			double y = event.getY() - tailleMoitieCible;
 			imageViewCible.setX(x);
 			imageViewCible.setY(y);
 		});
-		
+
 		//action de tirer
 		sceneJeu.setOnMouseClicked(click -> {
 			double xTir = click.getX(), yTir = click.getY();
@@ -218,22 +227,23 @@ public class FishHunt extends Application {
 				private long startTime = 0;
 				private long lastTime = 0;
 				private double rayonTir = tailleBalleTir;
+
 				@Override
 				public void handle(long now) {
-					if (startTime == 0 || lastTime == 0){
+					if (startTime == 0 || lastTime == 0) {
 						startTime = now;
 						lastTime = now;
 						return;
 					}
-					
-					double deltaT = (now - startTime)*1e-9;
-					double dt = (now - lastTime)*1e-9;
-					
+
+					double deltaT = (now - startTime) * 1e-9;
+					double dt = (now - lastTime) * 1e-9;
+
 					context.setFill(Color.BLACK);
-					context.fillOval(xTir-rayonTir/2.0, yTir-rayonTir/2.0, rayonTir, rayonTir);
+					context.fillOval(xTir - rayonTir / 2.0, yTir - rayonTir / 2.0, rayonTir, rayonTir);
 					rayonTir -= vitesseTirCible * dt;
-					
-					if (deltaT > (double)tailleBalleTir/vitesseTirCible) {
+
+					if (deltaT > (double) tailleBalleTir / vitesseTirCible) {
 						jeu.tirer(xTir, yTir);
 						stop();
 					}
@@ -242,10 +252,10 @@ public class FishHunt extends Application {
 			};
 			timerShoot.start();
 		});
-		
+
 		//raccourcis debug
 		sceneJeu.setOnKeyPressed(e -> {
-			switch (e.getCode()){
+			switch (e.getCode()) {
 				case ESCAPE:
 					timerJeu.stop();
 					primaryStage.setScene(creerSceneMenu());
@@ -267,23 +277,22 @@ public class FishHunt extends Application {
 					break;
 			}
 		});
-		
+
 		return sceneJeu;
 	}
-	
+
 	/**
-	 *
 	 * @return la scène des scores
 	 */
 	private Scene creerSceneScores() throws FileNotFoundException {
-		
+
 		VBox rootScores = new VBox();
 		Scene sceneScores = new Scene(rootScores, width, height, Color.GRAY);
-		
+
 		//root
 		rootScores.setAlignment(Pos.CENTER);
 		rootScores.setSpacing(10);
-		
+
 		//titre
 		Text titre = new Text("Meilleurs scores");
 		titre.setFont(new Font(28));
@@ -295,11 +304,13 @@ public class FishHunt extends Application {
 
 		try {
 			Scanner scan = new Scanner(new FileInputStream("scores.txt"));
+			int i = 1;
 			while (scan.hasNextInt()) {
 				int scoreFichier = scan.nextInt();
 				String nomFichier = scan.nextLine().substring(1);
-				String temp = nomFichier + " " + scoreFichier + "";
+				String temp = "#" + i + " - " + nomFichier + " - " + scoreFichier + "";
 				fichierScores.add(temp);
+				i++;
 			}
 		} catch (FileNotFoundException ex) {
 			System.out.println("Erreur de lecture du fichier");
@@ -308,6 +319,7 @@ public class FishHunt extends Application {
 		ObservableList<String> scores = FXCollections.observableArrayList(fichierScores);
 		ListView<String> scoreListView = new ListView<String>(scores);
 		rootScores.getChildren().add(scoreListView);
+		scoreListView.setMaxSize(0.85 * width, 0.75 * height);
 
 		//demander le score
 		if (jeu.verifScore()) {
@@ -332,21 +344,22 @@ public class FishHunt extends Application {
 				try {
 					jeu.updateScore(nom);
 				} catch (FileNotFoundException ex) {
-					System.out.println("Erreur à la lecture du fichier");;
+					System.out.println("Erreur à la lecture du fichier");
+					;
 				}
 			});
 		}
-		
+
 		//Retour au menu
 		Button boutonMenu = new Button("Menu");
 		boutonMenu.setOnAction(e -> {
 			primaryStage.setScene(creerSceneMenu());
 		});
 		rootScores.getChildren().add(boutonMenu);
-		
+
 		//raccouris
 		sceneScores.setOnKeyPressed(e -> {
-			switch (e.getCode()){
+			switch (e.getCode()) {
 				case ESCAPE:
 					Platform.exit();
 					break;
@@ -355,11 +368,11 @@ public class FishHunt extends Application {
 			}
 		});
 
-		
-		return sceneScores;
-    }
 
-    void mourir() {
+		return sceneScores;
+	}
+
+	void mourir() {
 
 		timerJeu.stop();
 
@@ -393,7 +406,8 @@ public class FishHunt extends Application {
 					try {
 						primaryStage.setScene(creerSceneScores());
 					} catch (FileNotFoundException e) {
-						System.out.println("Erreur de lecture du fichier");;
+						System.out.println("Erreur de lecture du fichier");
+						;
 					}
 					stop();
 				}
@@ -412,12 +426,28 @@ public class FishHunt extends Application {
 		BackgroundFill fillFondBleu = new BackgroundFill(Color.DARKBLUE, CornerRadii.EMPTY, Insets.EMPTY);
 		Background fondBleu = new Background(fillFondBleu);
 		rootLvlUp.setBackground(fondBleu);
+		Canvas canvasLvlUp = new Canvas(width, height);
+		GraphicsContext contextLvlUp = canvasLvlUp.getGraphicsContext2D();
+
+		contextLvlUp.setFont(new Font(30));
+		contextLvlUp.setTextAlign(TextAlignment.CENTER);
+		contextLvlUp.setFill(Color.RED);
+		contextLvlUp.fillText(((Integer) jeu.getScore()).toString(), width / 2.0, 60);
+
 
 		Text lvlUpText = new Text("Niveau " + prochainNiveau);
 		lvlUpText.setFill(Color.WHITE);
 		lvlUpText.setTextAlignment(TextAlignment.CENTER);
-		lvlUpText.setFont(new Font(80));
+		lvlUpText.setFont(new Font(50));
 		rootLvlUp.setCenter(lvlUpText);
+
+		for (int i = 0; i < jeu.getNbViesMax(); i++) {
+			int xImageI = jeu.getxImage1Score() + i * (jeu.getTailleImgScore() + jeu.getEspacementImgScore());
+			contextLvlUp.drawImage(jeu.getImageScore()[i], xImageI, 100, jeu.getTailleImgScore(),
+					jeu.getTailleImgScore());
+		}
+
+		rootLvlUp.getChildren().add(canvasLvlUp);
 
 		primaryStage.setScene(sceneMonterNiveau);
 
@@ -439,6 +469,4 @@ public class FishHunt extends Application {
 		};
 		lvlUpTimer.start();
 	}
-
-
 }

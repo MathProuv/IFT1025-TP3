@@ -15,6 +15,7 @@ import static java.lang.Math.pow;
 public class Jeu {
     private final int width, height;
     private final Modele modele;
+    //public Image[] getImagesScore;
     private FishHunt vue;
     
     private final int nbViesMax = 3;
@@ -286,4 +287,14 @@ public class Jeu {
     public ArrayList<Poisson> getPoissons() { return this.poissons; }
 
     public int getScore() { return this.score; }
+
+    public int getNbViesMax() { return this.nbViesMax; }
+
+    public int getxImage1Score() { return this.xImage1Score; }
+
+    public int getTailleImgScore() { return this.tailleImgScore; }
+
+    public int getEspacementImgScore() { return this.espacementImgScore; }
+
+    public Image[] getImageScore() { return this.imagesScore; }
 }
