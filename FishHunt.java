@@ -45,6 +45,12 @@ public class FishHunt extends Application {
 		private long startTime = 0;
 		private long lastTime = 0;
 		private int nbBulles = 0;
+		
+		@Override
+		public void start() {
+			super.start();
+			startTime = 0;
+		}
 
 
 		@Override
