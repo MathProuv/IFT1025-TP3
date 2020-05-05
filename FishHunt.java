@@ -17,7 +17,8 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
-
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Scanner;
@@ -375,6 +376,11 @@ public class FishHunt extends Application {
 	void mourir() {
 
 		timerJeu.stop();
+		
+		File fileSon = new File("sounds/Mourir.m4a");
+		Media sonMort = new Media(fileSon.toURI().toString());
+		MediaPlayer sonMortPlayer = new MediaPlayer(sonMort);
+		sonMortPlayer.play();
 
 		BorderPane rootGameOver = new BorderPane();
 		Scene sceneGameOver = new Scene(rootGameOver, width, height);
@@ -468,5 +474,14 @@ public class FishHunt extends Application {
 			}
 		};
 		lvlUpTimer.start();
+	}
+	
+	
+	
+	public void tirer() {
+		File fileSon = new File("sounds/Tir.m4a");
+		Media sonTir = new Media(fileSon.toURI().toString());
+		MediaPlayer sonTirPlayer = new MediaPlayer(sonTir);
+		sonTirPlayer.play();
 	}
 }
