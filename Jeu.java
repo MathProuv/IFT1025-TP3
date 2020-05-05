@@ -133,6 +133,7 @@ public class Jeu {
      */
     public void tirer(double xTir, double yTir) {
         modele.tirer(xTir, yTir, this);
+        vue.tirer();
     }
     
     /**
