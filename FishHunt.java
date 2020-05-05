@@ -377,10 +377,12 @@ public class FishHunt extends Application {
 
 		timerJeu.stop();
 		
-		File fileSon = new File("sounds/Mourir.m4a");
-		Media sonMort = new Media(fileSon.toURI().toString());
-		MediaPlayer sonMortPlayer = new MediaPlayer(sonMort);
-		sonMortPlayer.play();
+		if (bruit) {
+			File fileSon = new File("sounds/Mourir.m4a");
+			Media sonMort = new Media(fileSon.toURI().toString());
+			MediaPlayer sonMortPlayer = new MediaPlayer(sonMort);
+			sonMortPlayer.play();
+		}
 
 		BorderPane rootGameOver = new BorderPane();
 		Scene sceneGameOver = new Scene(rootGameOver, width, height);
@@ -479,9 +481,11 @@ public class FishHunt extends Application {
 	
 	
 	public void tirer() {
-		File fileSon = new File("sounds/Tir.m4a");
-		Media sonTir = new Media(fileSon.toURI().toString());
-		MediaPlayer sonTirPlayer = new MediaPlayer(sonTir);
-		sonTirPlayer.play();
+		if (bruit) {
+			File fileSon = new File("sounds/Tir.m4a");
+			Media sonTir = new Media(fileSon.toURI().toString());
+			MediaPlayer sonTirPlayer = new MediaPlayer(sonTir);
+			sonTirPlayer.play();
+		}
 	}
 }
