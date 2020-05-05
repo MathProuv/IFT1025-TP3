@@ -1,10 +1,11 @@
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
-import javafx.scene.paint.Paint;
-import java.util.ArrayList;
 import java.util.Random;
 
+/**
+ * @author Mathilde Prouvost et Augustine Poirier
+ */
 public class Poisson {
     protected final int width, height, taille;
     // x et y représentent les coordonnées en haut à gauche du poisson
@@ -24,6 +25,13 @@ public class Poisson {
     };
     protected Image image;
 
+    /**
+     * Constructeur des poissons
+     *
+     * @param width largeur du poisson
+     * @param height hauteur du poisson
+     * @param vitesseLevel vitesse du poisson
+     */
     public Poisson(int width, int height, double vitesseLevel) {
         Random rand = new Random();
         // Taille aléatoire entre 80 et 120px
@@ -35,43 +43,51 @@ public class Poisson {
         // Position en x aléatoire : à droite ou à gauche
         this.x = randX ? -taille : width+taille;
         this.direction = (randX);
-        // Position y entre 0.2 et 0.8 de la taille de la fenêtre (en haut à gauche du poisson)
+
+        // Position y entre 0.2 et 0.8 de la taille de la fenêtre
         this.y = rand.nextDouble()*0.6*height+height/5.0;
+
         // Vitesse verticale entre 100 et 200 px/s
         this.vy = -(rand.nextDouble()*100+100);
         this.vx = randX ? vitesseLevel : -vitesseLevel;
+
         this.ay = 100;
         this.ax = 0;
+
+        // Poisson aléatoire dans les images fournies
         int randImage = rand.nextInt(imagesList.length);
         this.image = imagesList[randImage];
+        // Si le poisson va vers la gauche, on retourne l'image
         if (!direction)
             this.image = ImageHelpers.flop(this.image);
-        this.image = ImageHelpers.colorize(image, Color.hsb(Math.random()*360, 0.8, 0.8));
+        // Couleur aléatoire
+        this.image = ImageHelpers.colorize(image, Color.hsb(Math.random()*360, 1, 1));
     }
 
+    /**
+     * Méthode draw des poissons
+     *
+     * @param context context du canvas du jeu
+     */
     public void draw(GraphicsContext context) {
         context.drawImage(this.image, x, y, taille, taille);
-        //context.setFill(Color.RED);
-        //context.fillRect(x, y, 5, 5);
     }
 
+    /**
+     * Update du poissons
+     *
+     * @param dt temps entre 2 frames
+     */
     public void update(double dt) {
         this.x += vx*dt;
         this.y += vy*dt;
         this.vx += ax*dt;
         this.vy += ay*dt;
-
-        //this.x = width/2;
-        //this.y = height/2;
     }
 
     public double getX(){ return this.x; }
 
     public double getY(){ return this.y; }
-
-    public double getvx(){ return this.vx; }
-
-    public double getvy(){ return this.vy; }
 
     public boolean getDirection(){ return this.direction; }
 

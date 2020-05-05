@@ -10,6 +10,9 @@ import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import java.util.ArrayList;
 
+/**
+ * @author Mathilde Prouvost et Augustine Poirier
+ */
 public class Tests extends Application {
     
     private Stage primaryStage;

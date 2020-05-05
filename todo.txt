@@ -9,8 +9,8 @@
 + 3 secondes d'affichage
 	+ game over
 	+ monter de niveau
-- pb de timing des poissons en changeant de niveau
++ pb de timing des poissons en changeant de niveau
 + mouvement crabe
 + mouvement étoile
 + couleur des poissons
-- son
++ son

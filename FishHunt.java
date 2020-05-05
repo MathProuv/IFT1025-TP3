@@ -27,7 +27,7 @@ import java.util.Scanner;
  * @author Mathilde Prouvost et Augustine Poirier
  */
 public class FishHunt extends Application {
-	private final int width = 640, height = 480;
+	private final int width = 640, height = 480, periodeBulles = 3;
 
 	private final Jeu jeu = new Jeu(width, height, this);
 
@@ -49,6 +49,8 @@ public class FishHunt extends Application {
 		@Override
 		public void start() {
 			super.start();
+			// chaque réinitialisation du timer correspond à un nouveau niveau, on doit donc réinitialiser
+			// le startTime à 0
 			startTime = 0;
 		}
 
@@ -62,12 +64,11 @@ public class FishHunt extends Application {
 			}
 
 			double deltaT = (now - startTime) * 1e-9;
-			System.out.println("deltaT de timerJeu : " + deltaT);
 			double dt = (now - lastTime) * 1e-9;
 
 			// les bulles sont crées à chaque 3 secondes à partir du début de la partie
-			if (deltaT > nbBulles * 3) {
-				jeu.creerBulles();
+			if (deltaT > nbBulles * periodeBulles) {
+				jeu.ajouterBulles();
 				nbBulles += 1;
 			}
 			jeu.update(dt);
@@ -78,7 +79,7 @@ public class FishHunt extends Application {
 	};
 
 	/**
-	 * Fonction main principale qui lance l'application
+	 * Fonction main qui lance l'application
 	 *
 	 * @param args
 	 */
@@ -87,7 +88,7 @@ public class FishHunt extends Application {
 	}
 
 	/**
-	 * lancement de l'application avec une scène de menu
+	 * Méthode pour lancer l'application avec une scène de menu
 	 *
 	 * @param primaryStage
 	 */
@@ -108,8 +109,8 @@ public class FishHunt extends Application {
 	}
 
 	/**
-	 * La scène du menu permet de choisir entre les différentes scènes
-	 * On a ajouté un bouton pour activer/désactiver le son et les bruitages (par défaut, ils sont éteints)
+	 * Méthode pour créer la scène du menu, qui permet de choisir entre les différentes scènes
+	 * Possède un bouton pour activer/désactiver les bruitages (par défaut, ils sont éteints)
 	 *
 	 * @return la scène du menu
 	 */
@@ -158,21 +159,13 @@ public class FishHunt extends Application {
 		effetsSonores.setSpacing(10);
 		rootMenu.getChildren().add(effetsSonores);
 
-		//son (musique)
-		CheckBox boutonSon = new CheckBox("Activer le son");
-		boutonSon.setTextFill(Color.WHITE);
-		boutonSon.setOnAction((click) -> {
-			son = !son;
-		});
-		effetsSonores.getChildren().add(boutonSon);
-
 		//bruit (effets spéciaux)
-		CheckBox boutonBruit = new CheckBox("Activer les bruits");
-		boutonBruit.setTextFill(Color.WHITE);
-		boutonBruit.setOnAction((click) -> {
+		CheckBox boutonEffetsSonores = new CheckBox("Activer les bruits");
+		boutonEffetsSonores.setTextFill(Color.WHITE);
+		boutonEffetsSonores.setOnAction((click) -> {
 			bruit = !bruit;
 		});
-		effetsSonores.getChildren().add(boutonBruit);
+		effetsSonores.getChildren().add(boutonEffetsSonores);
 
 		//raccourcis
 		sceneMenu.setOnKeyPressed(e -> {
@@ -190,8 +183,10 @@ public class FishHunt extends Application {
 	}
 
 	/**
-	 * La scène de jeu est celle où passent les poissons qu'il faut tirer avec la souris
+	 * Méthode pour créer la scène de jeu, qui contient les poissons, les bulles, le score, les vies
+	 * dans laquelle on peut tirer
 	 *
+	 * @param debut booléen true si on est au début du jeu, false si on est au début d'un niveau
 	 * @return la scène du jeu
 	 */
 	private Scene creerSceneJeu(boolean debut) {
@@ -260,7 +255,7 @@ public class FishHunt extends Application {
 			timerShoot.start();
 		});
 
-		//raccourcis debug
+		//raccourcis pour débugger
 		sceneJeu.setOnKeyPressed(e -> {
 			switch (e.getCode()) {
 				case ESCAPE:
@@ -289,6 +284,8 @@ public class FishHunt extends Application {
 	}
 
 	/**
+	 * Méthode pour créer la scène des meilleurs scores
+	 *
 	 * @return la scène des scores
 	 */
 	private Scene creerSceneScores() throws FileNotFoundException {
@@ -312,6 +309,7 @@ public class FishHunt extends Application {
 		try {
 			Scanner scan = new Scanner(new FileInputStream("scores.txt"));
 			int i = 1;
+			// on va chercher tous les scores du fichier et on les ajoute dans l'ArrayList fichierScores
 			while (scan.hasNextInt()) {
 				int scoreFichier = scan.nextInt();
 				String nomFichier = scan.nextLine().substring(1);
@@ -323,13 +321,14 @@ public class FishHunt extends Application {
 			System.out.println("Erreur de lecture du fichier");
 		}
 
+		// on affiche les meilleurs scores
 		ObservableList<String> scores = FXCollections.observableArrayList(fichierScores);
 		ListView<String> scoreListView = new ListView<String>(scores);
 		rootScores.getChildren().add(scoreListView);
 		scoreListView.setMaxSize(0.85 * width, 0.75 * height);
 
-		//demander le score
-		if (jeu.verifScore()) {
+		// si le score est dans le top 10, on demande au joueur de l'ajouter avec son nom
+		if (jeu.isInTop10()) {
 			int score = jeu.getScore();
 			HBox inputNom = new HBox();
 			inputNom.setAlignment(Pos.CENTER);
@@ -348,23 +347,18 @@ public class FishHunt extends Application {
 
 			ajouter.setOnAction((e) -> {
 				String nom = champNom.getText();
-				try {
-					jeu.updateScore(nom);
-				} catch (FileNotFoundException ex) {
-					System.out.println("Erreur à la lecture du fichier");
-					;
-				}
+				jeu.updateScore(nom);
 			});
 		}
 
-		//Retour au menu
+		// retour au menu
 		Button boutonMenu = new Button("Menu");
 		boutonMenu.setOnAction(e -> {
 			primaryStage.setScene(creerSceneMenu());
 		});
 		rootScores.getChildren().add(boutonMenu);
 
-		//raccouris
+		// raccouris
 		sceneScores.setOnKeyPressed(e -> {
 			switch (e.getCode()) {
 				case ESCAPE:
@@ -379,10 +373,14 @@ public class FishHunt extends Application {
 		return sceneScores;
 	}
 
+	/**
+	 * Méthode pour faire mourir le joueur
+	 */
 	void mourir() {
 
 		timerJeu.stop();
-		
+
+		// si les bruits sont activés, on fait jouer le bruit de mort
 		if (bruit) {
 			File fileSon = new File("sounds/Mourir.m4a");
 			Media sonMort = new Media(fileSon.toURI().toString());
@@ -393,7 +391,7 @@ public class FishHunt extends Application {
 		BorderPane rootGameOver = new BorderPane();
 		Scene sceneGameOver = new Scene(rootGameOver, width, height);
 
-		//root
+		// root
 		BackgroundFill fillFondNoir = new BackgroundFill(Color.DARKBLUE, CornerRadii.EMPTY, Insets.EMPTY);
 		Background fondNoir = new Background(fillFondNoir);
 		rootGameOver.setBackground(fondNoir);
@@ -430,8 +428,21 @@ public class FishHunt extends Application {
 		gameOver.start();
 	}
 
+	/**
+	 * Méthode pour monter de niveau
+	 *
+	 * @param prochainNiveau le niveau vers lequel on monte
+	 */
 	void monterNiveau(int prochainNiveau) {
 		timerJeu.stop();
+
+		// si les bruits sont activés, on fait jouer le bruit de level up
+		if (bruit) {
+			File fileSon = new File("sounds/LevelUp.m4a");
+			Media sonLevelUp = new Media(fileSon.toURI().toString());
+			MediaPlayer sonLevelUpPlayer = new MediaPlayer(sonLevelUp);
+			sonLevelUpPlayer.play();
+		}
 
 		BorderPane rootLvlUp = new BorderPane();
 		Scene sceneMonterNiveau = new Scene(rootLvlUp, width, height);
@@ -483,10 +494,13 @@ public class FishHunt extends Application {
 		};
 		lvlUpTimer.start();
 	}
-	
-	
-	
+
+
+	/**
+	 * Méthode pour tirer
+	 */
 	public void tirer() {
+		// si les bruits sont activés, on fait jouer le bruit de tir
 		if (bruit) {
 			File fileSon = new File("sounds/Tir.m4a");
 			Media sonTir = new Media(fileSon.toURI().toString());
